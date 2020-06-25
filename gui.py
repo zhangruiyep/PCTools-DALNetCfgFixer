@@ -36,10 +36,10 @@ class Application(ttk.Frame):
 			optionList.append(port.description)
 		
 		self.v = tk.StringVar()
-		if len(optionList) > 1:
-			self.v.set(optionList[1])
+		#if len(optionList) > 1:
+		#	self.v.set(optionList[1])
 
-		self.serialPortOpt = ttk.OptionMenu(serial_frame, self.v, *optionList)
+		self.serialPortOpt = ttk.OptionMenu(serial_frame, self.v, *optionList, command=self.onPortChange)
 		self.serialPortOpt.grid(row = 0, column=1, sticky=tk.W, padx=10)
 
 		opFrame = ttk.Frame(self)
@@ -136,6 +136,8 @@ class Application(ttk.Frame):
 		self.pbar["value"] = int(value * self.pbar["maximum"])
 		self.update_idletasks()
 
+	def onPortChange(self, value):
+		print("Port change to:" + value)
 
 
 app = Application()
