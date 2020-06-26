@@ -48,11 +48,20 @@ class Application(ttk.Frame):
 		self.opDevice = ttk.Label(opFrame, text="Device :", justify=tk.LEFT)
 		self.opDevice.grid(row = 0, sticky=tk.E, padx=10)
 
+		self.stDevice = ttk.Label(opFrame, text="Waiting", justify=tk.LEFT)
+		self.stDevice.grid(row = 0, sticky=tk.W, padx=10)
+
 		self.opThingsName = ttk.Label(opFrame, text="Things Name :", justify=tk.LEFT)
 		self.opThingsName.grid(row = 1, sticky=tk.E, padx=10)
 
+		self.stThingsName = ttk.Label(opFrame, text="", justify=tk.LEFT)
+		self.stThingsName.grid(row = 1, sticky=tk.W, padx=10)
+
 		self.opUrl = ttk.Label(opFrame, text="MQTT URL :", justify=tk.LEFT)
 		self.opUrl.grid(row = 2, sticky=tk.E, padx=10)
+
+		self.stUrl = ttk.Label(opFrame, text="", justify=tk.LEFT)
+		self.stUrl.grid(row = 2, sticky=tk.W, padx=10)
 
 		progressFrame = ttk.Frame(self)
 		progressFrame.grid(row = 3, sticky=tk.NSEW, pady=3)
@@ -138,6 +147,66 @@ class Application(ttk.Frame):
 
 	def onPortChange(self, value):
 		print("Port change to:" + value)
+
+	def repairThread(self, comNum):
+                # init status
+                self.stDevice["TEXT"] = "Waiting"
+                self.stThinsName["TEXT"] = ""
+                self.stUrl["TEXT"] = ""
+                self.updateProgress(0.0)
+                
+                # open serial
+		self.dev = mcuDevice(comNum, 1)
+		ret = self.dev.open()
+		if (ret.result != "OK"):
+			tkinter.messagebox.showerror(ret.result, ret.msg)
+			return
+		
+		# connect device
+		ret = self.dev.connect()
+		retry = 0
+		while ((ret.result != "OK") and (retry < 100)):
+                        self.stDevice["TEXT"] = "Waiting"
+                        time.sleep(2)
+                        ret = self.dev.connect()
+                        retry += 1
+                if (retry >= 100):
+                        self.stDevice["TEXT"] = "Timeout"
+                        tkinter.messagebox.showerror(ret.result, ret.msg)
+                        return
+                self.stDevice["TEXT"] = "Pass"
+                self.updateProgress(0.1)
+                
+                # things name
+                self.stThingsName["TEXT"] = "Checking"
+                ret = self.dev.runCmd("AT+THINGSNAME\r\n", "+ACK")
+                atCmds = ret.msg.split()
+                print atCmds
+                if len(atCmds) > 1:
+                        print("get error data")
+                        self.stThingsName["TEXT"] = "Repairing"
+                        atParas = atCmds[0].split('=')
+                        name = atParas[1]
+                        ret = self.dev.runCmd("AT+THINGSNAME=" + name + "\r\n", "+ACK")
+                        if (ret.result != "OK"):
+                                tkinter.messagebox.showerror(ret.result, ret.msg)
+                                return
+                        self.stThingsName["TEXT"] = "Verifing"
+                        ret = self.dev.runCmd("AT+THINGSNAME\r\n", "+ACK")
+                        atCmds = ret.msg.split()
+                        print atCmds
+                        if len(atCmds) > 1:
+                                tkinter.messagebox.showerror(ret.result, ret.msg)
+                                print("Repair fail")
+                                return
+                                
+                        self.stThinsName["TEXT"] = "Pass"
+                        self.updateProgress(0.5)
+                        
+                else:
+                        self.stThinsName["TEXT"] = "Pass"
+                        self.updateProgress(0.5)
+                        
 
 
 app = Application()

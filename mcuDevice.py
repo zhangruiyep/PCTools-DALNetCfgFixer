@@ -28,7 +28,7 @@ class mcuDevice():
 		ret = mcuDeviceRet("OK", "Close done.")
 		return ret
 
-	def runCmd(self, cmd):
+	def runCmd(self, cmd, ackString):
 		cmdRetry = 0
 		ret = None
 		
@@ -44,7 +44,7 @@ class mcuDevice():
 				print("Serial data INVALID. Please check device serial.")
 				getACK = False
 			else:
-				getACK = "+ACK:" in line
+				getACK = ackString in line
 				
 			rspRetry = 0
 			while (not getACK) and (rspRetry <= self.retryCount):
@@ -54,11 +54,11 @@ class mcuDevice():
 					print("Serial data INVALID. Please check device serial.")
 					getACK = False
 				else:
-					getACK = "+ACK:" in line
+					getACK = ackString in line
 				rspRetry += 1
 			
 			if (not getACK) and (rspRetry > self.retryCount):
-				ret = mcuDeviceRet("Warning", "Can not get +ACK from device")
+				ret = mcuDeviceRet("Warning", "Can not get ACK from device")
 				print(ret.msg)
 				cmdRetry += 1
 				continue
@@ -70,7 +70,12 @@ class mcuDevice():
 				cmdRetry += 1
 				continue
 	
-			ret = mcuDeviceRet("OK", "runCmd done.")
+			ret = mcuDeviceRet("OK", line)
 			return ret
 					
 		return ret
+	
+	def connect(self):
+                return self.runCmd("AT", "OK")
+
+        
