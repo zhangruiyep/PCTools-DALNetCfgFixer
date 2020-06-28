@@ -214,7 +214,7 @@ class Application(ttk.Frame):
 		
 		# MQTT
 		self.stUrl["text"] = "Checking"
-		correctUrl = "ag2xadrg7ayfr-ats.iot.ap-southeast-1.amazonaws.com,8883"
+		correctUrl = "a17ra1c9bg88c2-ats.iot.eu-central-1.amazonaws.com,8883"
 		url,ret = self.getMQTT()
 
 		if url != correctUrl:
@@ -248,7 +248,7 @@ class Application(ttk.Frame):
 
 
 app = Application()
-app.master.title('DAL601 Net Repair Tool V1.0')
+app.master.title('DAL601 Net Repair Tool V1.1')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()
