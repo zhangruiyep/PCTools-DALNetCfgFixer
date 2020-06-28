@@ -32,14 +32,15 @@ class Application(ttk.Frame):
 
 		optionList = ["", ]
 		for port in serial.tools.list_ports.comports():
-			print(port.description)
+			#print(port.description)
 			optionList.append(port.description)
 		
 		self.v = tk.StringVar()
-		#if len(optionList) > 1:
-		#	self.v.set(optionList[1])
+		if len(optionList) > 1:
+			self.v.set(optionList[1])
 
-		self.serialPortOpt = ttk.OptionMenu(serial_frame, self.v, *optionList, command=self.onPortChange)
+		#self.serialPortOpt = ttk.OptionMenu(serial_frame, self.v, *optionList, command=self.onPortChange)
+		self.serialPortOpt = ttk.OptionMenu(serial_frame, self.v, *optionList)
 		self.serialPortOpt.grid(row = 0, column=1, sticky=tk.W, padx=10)
 
 		opFrame = ttk.Frame(self)
@@ -48,83 +49,42 @@ class Application(ttk.Frame):
 		self.opDevice = ttk.Label(opFrame, text="Device :", justify=tk.LEFT)
 		self.opDevice.grid(row = 0, sticky=tk.E, padx=10)
 
-		self.stDevice = ttk.Label(opFrame, text="Waiting", justify=tk.LEFT)
-		self.stDevice.grid(row = 0, sticky=tk.W, padx=10)
+		self.stDevice = ttk.Label(opFrame, text="", justify=tk.LEFT)
+		self.stDevice.grid(row = 0, column = 1, sticky=tk.W, padx=10)
 
 		self.opThingsName = ttk.Label(opFrame, text="Things Name :", justify=tk.LEFT)
 		self.opThingsName.grid(row = 1, sticky=tk.E, padx=10)
 
 		self.stThingsName = ttk.Label(opFrame, text="", justify=tk.LEFT)
-		self.stThingsName.grid(row = 1, sticky=tk.W, padx=10)
+		self.stThingsName.grid(row = 1, column = 1, sticky=tk.W, padx=10)
 
 		self.opUrl = ttk.Label(opFrame, text="MQTT URL :", justify=tk.LEFT)
 		self.opUrl.grid(row = 2, sticky=tk.E, padx=10)
 
 		self.stUrl = ttk.Label(opFrame, text="", justify=tk.LEFT)
-		self.stUrl.grid(row = 2, sticky=tk.W, padx=10)
+		self.stUrl.grid(row = 2, column = 1, sticky=tk.W, padx=10)
 
+		actFrame = ttk.Frame(self)
+		actFrame.grid(row = 2, sticky = tk.NSEW, pady = 3)
+
+		self.startBtn = ttk.Button(actFrame, text="Start", command=self.startRepair)
+		self.startBtn.grid(padx=10, row = 0, column = 0)
+		
 		progressFrame = ttk.Frame(self)
 		progressFrame.grid(row = 3, sticky=tk.NSEW, pady=3)
 
 		self.pbar = ttk.Progressbar(progressFrame, orient ="horizontal", length = 600, mode ="determinate")
-		self.pbar.grid(padx=10, sticky=tk.NSEW)
+		#self.pbar.grid(padx=10, sticky=tk.NSEW)
 		self.pbar["maximum"] = 100
 
 		#self.saveCfgFileBtn = ttk.Button(actionFrame, text="Save Configuration", command=self.saveCfgFile)
 		#self.saveCfgFileBtn.grid(padx=10, row = 0, column = 1)
-
-	def dloadThread(self, comNum, retry, mode):
-		self.dloadBtn["state"] = "disabled"
-		self.dloadFailsBtn["state"] = "disabled"
-		self.dev = mcuDevice(comNum, retry)
-		ret = self.dev.open()
-		if (ret.result != "OK"):
-			tkinter.messagebox.showerror(ret.result, ret.msg)
-			self.dloadBtn["state"] = "normal"
-			self.dloadFailsBtn["state"] = "normal"
-			return
 		
-		# reset files state
-		if (mode == "ALL"):
-			for d in self.tv.filesdata.data:
-				d[FILEDATA_STATUS] = "READY"
-			self.tv.fill_treeview()
-			
-		dloadAllOK = True
-		doneCount = 0
-		
-		for d in self.tv.filesdata.data:
-			if (mode == "FAIL_RETRY") and (d[FILEDATA_STATUS] != "FAIL"):
-				continue
-			dlretry = 0
-			dl = dload(self.dev, d[FILEDATA_NAME]);
-			while (dl.dloadFile() == False):
-				#self.dev.close()
-				#tkinter.messagebox.showinfo("Info", "Download %s failed." % d[0])
-				#self.dloadBtn["state"] = "normal"
-				#return
-				dlretry += 1
-				if (dlretry > retry):
-					break;
-			if (dlretry > retry):
-				d[FILEDATA_STATUS] = "FAIL"
-				dloadAllOK = False
-			else:
-				d[FILEDATA_STATUS] = "DONE"
-			self.tv.fill_treeview()
-			doneCount += 1
-			self.updateProgress(1.0 * doneCount / len(self.tv.filesdata.data))
-		
-		self.dev.close()
-		if (dloadAllOK):
-			tkinter.messagebox.showinfo("Info", "Download Complete.")
-		else:
-			tkinter.messagebox.showerror("Error", "Download Fail.")
-			
-		self.dloadBtn["state"] = "normal"
-		self.dloadFailsBtn["state"] = "normal"
+		helpFrame = ttk.Frame(self)
+		helpFrame.grid(row = 4, sticky=tk.NSEW, pady = 3)
 
-
+		self.helpInfo = ttk.Label(helpFrame, text="Steps:\n1. Select COM port.\n2. Click \"Start\" button.\n3. Connect device to white-box.\n4. Power on.", justify=tk.LEFT)
+		self.helpInfo.grid(row = 0, sticky=tk.E, padx=10)
 
 	def saveCfgFile(self):
 		try:
@@ -145,72 +105,150 @@ class Application(ttk.Frame):
 		self.pbar["value"] = int(value * self.pbar["maximum"])
 		self.update_idletasks()
 
-	def onPortChange(self, value):
-		print("Port change to:" + value)
+	#def onPortChange(self, value):
+	def startRepair(self):
+		value = self.v.get()
+		comNum = None
+		for port in serial.tools.list_ports.comports():
+			if (port.description == value):
+				comNum = port.device
+				break
+		
+		if comNum == None:
+			tkinter.messagebox.showerror("Error", "Device COM not set")
+			return
 
+		self.thread = threading.Thread(target=self.repairThread, name="Thread-repair", args=(comNum,), daemon=True)
+		self.thread.start()
+
+	def getThingsName(self):
+		ret = self.dev.runCmd(b"AT+THINGSNAME?\r\n", "THINGSNAME")
+		atRsp = ret.msg.split() #remove \r\n
+		atParas = atRsp[0].split('=')
+		#print(atParas)
+		# read another line
+		line = self.dev.ser.readline().decode("utf-8")
+		if len(line) == 0:
+			nameIsCorrect = True
+		else:
+			nameIsCorrect = False
+		return atParas[1],nameIsCorrect,ret
+
+	def getMQTT(self):
+		ret = self.dev.runCmd(b"AT+MQTT?\r\n", "MQTT")
+		atRsp = ret.msg.split() #remove \r\n
+		atParas = atRsp[0].split('=')
+		#print(atParas)
+		return atParas[1],ret
+	
 	def repairThread(self, comNum):
-                # init status
-                self.stDevice["TEXT"] = "Waiting"
-                self.stThinsName["TEXT"] = ""
-                self.stUrl["TEXT"] = ""
-                self.updateProgress(0.0)
-                
-                # open serial
-		self.dev = mcuDevice(comNum, 1)
+		# init status
+		self.stDevice["text"] = "Waiting"
+		self.stThingsName["text"] = ""
+		self.stUrl["text"] = ""
+		self.startBtn['state'] = "disabled"
+		self.updateProgress(0.0)
+		
+		# open serial
+		self.dev = mcuDevice(comNum, 0)
 		ret = self.dev.open()
 		if (ret.result != "OK"):
 			tkinter.messagebox.showerror(ret.result, ret.msg)
+			self.startBtn['state'] = "normal"
 			return
 		
-		# connect device
+		# clean boot log
+		self.dev.cleanRxBuff()
+		
+		# pv mode
+		self.stDevice["text"] = "Waiting"
 		ret = self.dev.connect()
 		retry = 0
-		while ((ret.result != "OK") and (retry < 100)):
-                        self.stDevice["TEXT"] = "Waiting"
-                        time.sleep(2)
-                        ret = self.dev.connect()
-                        retry += 1
-                if (retry >= 100):
-                        self.stDevice["TEXT"] = "Timeout"
-                        tkinter.messagebox.showerror(ret.result, ret.msg)
-                        return
-                self.stDevice["TEXT"] = "Pass"
-                self.updateProgress(0.1)
-                
-                # things name
-                self.stThingsName["TEXT"] = "Checking"
-                ret = self.dev.runCmd("AT+THINGSNAME\r\n", "+ACK")
-                atCmds = ret.msg.split()
-                print atCmds
-                if len(atCmds) > 1:
-                        print("get error data")
-                        self.stThingsName["TEXT"] = "Repairing"
-                        atParas = atCmds[0].split('=')
-                        name = atParas[1]
-                        ret = self.dev.runCmd("AT+THINGSNAME=" + name + "\r\n", "+ACK")
-                        if (ret.result != "OK"):
-                                tkinter.messagebox.showerror(ret.result, ret.msg)
-                                return
-                        self.stThingsName["TEXT"] = "Verifing"
-                        ret = self.dev.runCmd("AT+THINGSNAME\r\n", "+ACK")
-                        atCmds = ret.msg.split()
-                        print atCmds
-                        if len(atCmds) > 1:
-                                tkinter.messagebox.showerror(ret.result, ret.msg)
-                                print("Repair fail")
-                                return
-                                
-                        self.stThinsName["TEXT"] = "Pass"
-                        self.updateProgress(0.5)
-                        
-                else:
-                        self.stThinsName["TEXT"] = "Pass"
-                        self.updateProgress(0.5)
-                        
+		while ((ret.result != "OK") and (retry < 1000)):	
+			self.stDevice["text"] = "Waiting"
+			time.sleep(1)
+			ret = self.dev.connect()
+			retry += 1
+			if (retry >= 1000):
+				self.stDevice["text"] = "Timeout"
+				tkinter.messagebox.showerror(ret.result, ret.msg)
+				self.dev.close()
+				self.startBtn['state'] = "normal"
+				return
+		
+		# pv mode ok
+		self.stDevice["text"] = "Ready"
+		
+		# things name				
+		self.stThingsName["text"] = "Checking"
+		#ret = self.dev.runCmd(b"AT+THINGSNAME?\r\n", "THINGSNAME")
+		#atCmds = ret.msg.split()
+		#print(atCmds)
+		name,isCorrect,ret = self.getThingsName()
+		#if len(atCmds) > 1:
+		if not isCorrect:
+			print("get error data")
+			self.stThingsName["text"] = "Repairing"
+			ret = self.dev.runCmd(b"AT+THINGSNAME=" + bytes(name, "utf-8") + b"\r\n", "OK")
+			if (ret.result != "OK"):
+				tkinter.messagebox.showerror(ret.result, ret.msg)
+				self.dev.close()
+				self.startBtn['state'] = "normal"
+				return
+			
+			self.stThingsName["text"] = "Verifing"
+			name,isCorrect,ret = self.getThingsName()
+			if not isCorrect:
+				tkinter.messagebox.showerror(ret.result, ret.msg)
+				print("Repair fail")
+				self.dev.close()
+				self.startBtn['state'] = "normal"
+				return
+					
+			self.stThingsName["text"] = "Repaired"
+			self.updateProgress(0.5)
+		else:
+			self.stThingsName["text"] = "Pass"
+			self.updateProgress(0.5)
+		
+		
+		# MQTT
+		self.stUrl["text"] = "Checking"
+		correctUrl = "ag2xadrg7ayfr-ats.iot.ap-southeast-1.amazonaws.com,8883"
+		url,ret = self.getMQTT()
+
+		if url != correctUrl:
+			self.stUrl["text"] = "Repairing"
+			ret = self.dev.runCmd(b"AT+MQTT=" + bytes(correctUrl, "utf-8") + b"\r\n", "OK")
+			if (ret.result != "OK"):
+				tkinter.messagebox.showerror(ret.result, ret.msg)
+				self.dev.close()
+				self.startBtn['state'] = "normal"
+				return
+			
+			self.stUrl["text"] = "Verifing"
+			url,ret = self.getMQTT()
+			if url != correctUrl:
+				tkinter.messagebox.showerror(ret.result, ret.msg)
+				print("Repair fail")
+				self.dev.close()
+				self.startBtn['state'] = "normal"
+				return
+					
+			self.stUrl["text"] = "Repaired"
+			self.updateProgress(1.0)
+		else:
+			self.stUrl["text"] = "Pass"
+			self.updateProgress(1.0)
+		
+		tkinter.messagebox.showinfo("Done", "Please power off and disconnect device.\r\nThen repeat step 2~4.")
+		self.dev.close()
+		self.startBtn['state'] = "normal"
+		return
 
 
 app = Application()
-app.master.title('DAL601 Network Configuration Repair Tool')
+app.master.title('DAL601 Net Repair Tool V1.0')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()

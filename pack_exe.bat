@@ -1,1 +1,1 @@
-pyinstaller --onefile -n NetCfgFixer gui.py
+pyinstaller --onefile -n NetRepairTool gui.py
