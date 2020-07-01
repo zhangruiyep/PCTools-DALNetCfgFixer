@@ -128,11 +128,11 @@ class Application(ttk.Frame):
 		#print(atParas)
 		# read another line
 		line = self.dev.ser.readline().decode("utf-8")
-		if len(line) == 0 and len(atParas[1]) == 16:
+		if len(line) == 0 and len(atParas[1]) == 15:
 			nameIsCorrect = True
 		else:
 			nameIsCorrect = False
-		return atParas[1][:16],nameIsCorrect,ret
+		return atParas[1][:15],nameIsCorrect,ret
 
 	def getMQTT(self):
 		ret = self.dev.runCmd(b"AT+MQTT?\r\n", "MQTT")
@@ -248,7 +248,7 @@ class Application(ttk.Frame):
 
 
 app = Application()
-app.master.title('DAL601 Net Repair Tool V1.2')
+app.master.title('DAL601 Net Repair Tool V1.3')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()
