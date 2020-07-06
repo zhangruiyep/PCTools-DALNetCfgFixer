@@ -255,7 +255,7 @@ class Application(ttk.Frame):
 
 
 app = Application()
-app.master.title('DAL601 Net Repair Tool V1.3')
+app.master.title('DAL601 Net Repair Tool V1.4')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()
