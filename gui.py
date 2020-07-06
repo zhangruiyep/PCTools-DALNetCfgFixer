@@ -123,16 +123,26 @@ class Application(ttk.Frame):
 
 	def getThingsName(self):
 		ret = self.dev.runCmd(b"AT+THINGSNAME?\r\n", "THINGSNAME")
+		# test rsp data
+		#ret.msg = "THINGSNAME=391202006300010AA\r\nATXXX"
 		atRsp = ret.msg.split() #remove \r\n
 		atParas = atRsp[0].split('=')
 		#print(atParas)
+		if (atParas[1][:3] == "391"):
+			correctNameLen = 15
+		elif (atParas[1][:4] == "3413"):
+			correctNameLen = 16
+		else:
+			correctNameLen = 16
+		#print("correctNameLen=%d" % correctNameLen)
 		# read another line
 		line = self.dev.ser.readline().decode("utf-8")
-		if len(line) == 0 and len(atParas[1]) == 15:
+		if len(line) == 0 and len(atParas[1]) == correctNameLen:
 			nameIsCorrect = True
 		else:
 			nameIsCorrect = False
-		return atParas[1][:15],nameIsCorrect,ret
+		
+		return atParas[1][:correctNameLen],nameIsCorrect,ret
 
 	def getMQTT(self):
 		ret = self.dev.runCmd(b"AT+MQTT?\r\n", "MQTT")
@@ -159,7 +169,7 @@ class Application(ttk.Frame):
 		
 		# clean boot log
 		self.dev.cleanRxBuff()
-		
+
 		# pv mode
 		self.stDevice["text"] = "Waiting"
 		ret = self.dev.connect()
@@ -175,15 +185,12 @@ class Application(ttk.Frame):
 				self.dev.close()
 				self.startBtn['state'] = "normal"
 				return
-		
+
 		# pv mode ok
 		self.stDevice["text"] = "Ready"
 		
 		# things name				
 		self.stThingsName["text"] = "Checking"
-		#ret = self.dev.runCmd(b"AT+THINGSNAME?\r\n", "THINGSNAME")
-		#atCmds = ret.msg.split()
-		#print(atCmds)
 		name,isCorrect,ret = self.getThingsName()
 		#if len(atCmds) > 1:
 		if not isCorrect:
