@@ -83,7 +83,7 @@ class Application(ttk.Frame):
 		helpFrame = ttk.Frame(self)
 		helpFrame.grid(row = 4, sticky=tk.NSEW, pady = 3)
 
-		self.helpInfo = ttk.Label(helpFrame, text="Steps:\n1. Select COM port.\n2. Click \"Start\" button.\n3. Connect device to white-box.\n4. Power on.", justify=tk.LEFT)
+		self.helpInfo = ttk.Label(helpFrame, text="Steps:\n1. Select COM port.\n2. Connect device to white-box.\n3. Power on and wait device bootup.\n4. Click \"Start\" button.", justify=tk.LEFT)
 		self.helpInfo.grid(row = 0, sticky=tk.E, padx=10)
 
 	def saveCfgFile(self):
@@ -255,7 +255,7 @@ class Application(ttk.Frame):
 
 
 app = Application()
-app.master.title('DAL601 Net Repair Tool V1.4')
+app.master.title('DAL601 Net Repair Tool V1.5')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()
