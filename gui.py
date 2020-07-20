@@ -167,9 +167,13 @@ class Application(ttk.Frame):
 			self.startBtn['state'] = "normal"
 			return
 		
+		# wait device boot up
+		time.sleep(8)
+		self.updateProgress(0.2)
+		
 		# clean boot log
-		self.dev.cleanRxBuff()
-
+		#self.dev.cleanRxBuff()
+		'''
 		# pv mode
 		self.stDevice["text"] = "Waiting"
 		ret = self.dev.connect()
@@ -185,8 +189,20 @@ class Application(ttk.Frame):
 				self.dev.close()
 				self.startBtn['state'] = "normal"
 				return
-
-		# pv mode ok
+		'''
+		# close log
+		self.stDevice["text"] = "Waiting"
+		ret = self.dev.connect()
+		
+		# check version
+		ret = self.dev.runCmd(b"AT+MCUVER?\r\n", "+ACK:")
+		if not "JETS_E1A1_GA01" in ret.msg:
+			tkinter.messagebox.showerror("ERROR", "Can not get device version JETS_E1A1_GA01.")
+			self.dev.close()
+			self.startBtn['state'] = "normal"
+			return
+		
+		# ready
 		self.stDevice["text"] = "Ready"
 		
 		# things name				
@@ -248,7 +264,7 @@ class Application(ttk.Frame):
 			self.stUrl["text"] = "Pass"
 			self.updateProgress(1.0)
 		
-		tkinter.messagebox.showinfo("Done", "Please power off and disconnect device.\r\nThen repeat step 2~4.")
+		tkinter.messagebox.showinfo("Done", "Complete!\r\nPlease power off and disconnect device.\r\nThen repeat step 2~4.")
 		self.dev.close()
 		self.startBtn['state'] = "normal"
 		return
