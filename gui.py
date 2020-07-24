@@ -126,6 +126,7 @@ class Application(ttk.Frame):
 		# test rsp data
 		#ret.msg = "THINGSNAME=391202006300010AA\r\nATXXX"
 		atRsp = ret.msg.split() #remove \r\n
+		#print(atRsp)
 		atParas = atRsp[0].split('=')
 		#print(atParas)
 		if (atParas[1][:3] == "391"):
@@ -137,11 +138,14 @@ class Application(ttk.Frame):
 		#print("correctNameLen=%d" % correctNameLen)
 		# read another line
 		line = self.dev.ser.readline().decode("utf-8")
-		if len(line) == 0 and len(atParas[1]) == correctNameLen:
+		if len(line) == 0 and len(atRsp) == 1 and len(atParas[1]) == correctNameLen:
 			nameIsCorrect = True
 		else:
 			nameIsCorrect = False
 		
+		#print(atParas[1][:correctNameLen])
+		#print(nameIsCorrect)
+		#print(ret)
 		return atParas[1][:correctNameLen],nameIsCorrect,ret
 
 	def getMQTT(self):
@@ -271,7 +275,7 @@ class Application(ttk.Frame):
 
 
 app = Application()
-app.master.title('DAL601 Net Repair Tool V1.5')
+app.master.title('DAL601 Net Repair Tool V1.8')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()
