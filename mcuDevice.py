@@ -89,11 +89,10 @@ class mcuDevice():
 		return ret
 	
 	def connect(self):
-		ret = self.runCmd(b"AT+LOG=ALL,0\r\n", "OK")
+		ret = self.runCmd(b"AT+PVMODE=2\r\n", "OK")
 		time.sleep(1)
 		self.cleanRxBuff()
-		ret = self.runCmd(b"AT+LOG=ALL,0\r\n", "OK")
-		ret.result = "OK"
+		ret = self.runCmd(b"AT+PVMODE=2\r\n", "OK")
 		return ret
 		
 	def cleanRxBuff(self):

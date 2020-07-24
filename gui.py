@@ -64,6 +64,12 @@ class Application(ttk.Frame):
 		self.stUrl = ttk.Label(opFrame, text="", justify=tk.LEFT)
 		self.stUrl.grid(row = 2, column = 1, sticky=tk.W, padx=10)
 
+		self.opCert = ttk.Label(opFrame, text="Cert :", justify=tk.LEFT)
+		self.opCert.grid(row = 3, sticky=tk.E, padx=10)
+
+		self.stCert = ttk.Label(opFrame, text="", justify=tk.LEFT)
+		self.stCert.grid(row = 3, column = 1, sticky=tk.W, padx=10)
+		
 		actFrame = ttk.Frame(self)
 		actFrame.grid(row = 2, sticky = tk.NSEW, pady = 3)
 
@@ -172,12 +178,12 @@ class Application(ttk.Frame):
 			return
 		
 		# wait device boot up
-		time.sleep(8)
+		time.sleep(6)
 		self.updateProgress(0.2)
 		
 		# clean boot log
 		#self.dev.cleanRxBuff()
-		'''
+		
 		# pv mode
 		self.stDevice["text"] = "Waiting"
 		ret = self.dev.connect()
@@ -197,6 +203,7 @@ class Application(ttk.Frame):
 		# close log
 		self.stDevice["text"] = "Waiting"
 		ret = self.dev.connect()
+		'''
 		
 		# check version
 		ret = self.dev.runCmd(b"AT+MCUVER?\r\n", "+ACK:")
@@ -263,9 +270,31 @@ class Application(ttk.Frame):
 				return
 					
 			self.stUrl["text"] = "Repaired"
-			self.updateProgress(1.0)
+			self.updateProgress(0.7)
 		else:
 			self.stUrl["text"] = "Pass"
+			self.updateProgress(0.7)
+
+		# CERT
+		self.stCert["text"] = "Deleting"
+		ret = self.dev.runCmd(b"AT+ZFILEDEL=mq_rootCA.crt\r\n", "OK")
+		
+		if (ret.msg == "Can not get ACK from device"):
+			retry = 0
+			while retry < 5 and ret.msg == "Can not get ACK from device":
+				time.sleep(5)
+				ret = self.dev.runCmd(b"AT+ZFILEDEL=mq_rootCA.crt\r\n", "OK")
+				retry += 1
+			
+			if retry >= 5:
+				self.stCert["text"] = "Fail"
+				self.updateProgress(1.0)
+			else:
+				self.stCert["text"] = "Pass"
+				self.updateProgress(1.0)
+				
+		else:
+			self.stCert["text"] = "Pass"
 			self.updateProgress(1.0)
 		
 		tkinter.messagebox.showinfo("Done", "Complete!\r\nPlease power off and disconnect device.\r\nThen repeat step 2~4.")
@@ -275,7 +304,7 @@ class Application(ttk.Frame):
 
 
 app = Application()
-app.master.title('DAL601 Net Repair Tool V1.8')
+app.master.title('DAL601 Net Repair Tool V1.9')
 app.master.rowconfigure(0, weight=1)
 app.master.columnconfigure(0, weight=1)
 app.mainloop()
